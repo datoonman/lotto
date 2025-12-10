@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Thai Lottery 10-Year Data Analysis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-card: #0f172a;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.15);
+      --accent-strong: rgba(34, 197, 94, 0.4);
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --border: #1f2937;
+      --danger: #f97373;
+      --shadow-soft: 0 24px 80px rgba(15, 23, 42, 0.85);
+      --radius-lg: 18px;
+      --radius-pill: 999px;
+      --gap: 1.5rem;
+      --transition-fast: 180ms ease-out;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at top, #1d283a 0, #020617 55%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px 16px 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 1180px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      align-items: flex-start;
+      margin-bottom: 1.75rem;
+    }
+
+    .title-block {
+      flex: 1 1 260px;
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 2vw + 0.8rem, 2.1rem);
+      margin: 0 0 0.3rem;
+      letter-spacing: 0.03em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: linear-gradient(to right, rgba(34, 197, 94, 0.16), rgba(56, 189, 248, 0.16));
+      border-radius: var(--radius-pill);
+      padding: 0.15rem 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      color: var(--accent);
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-soft);
+      max-width: 640px;
+      line-height: 1.5;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.75rem;
+      align-items: stretch;
+    }
+
+    .pill {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: rgba(15, 23, 42, 0.7);
+      padding: 0.7rem 0.9rem;
+      font-size: 0.78rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .pill-label {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+      color: var(--text-soft);
+    }
+
+    .pill-value {
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .pill strong {
+      color: var(--accent);
+    }
+
+    .pill.note strong {
+      color: var(--danger);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--gap);
+      align-items: flex-start;
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.06), transparent 45%),
+                  radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.08), transparent 50%),
+                  var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem 1rem 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(148, 163, 184, 0.12), transparent 55%);
+      opacity: 0.7;
+      mix-blend-mode: soft-light;
+      pointer-events: none;
+    }
+
+    .card-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .card-title span.icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 7px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .card-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.8rem;
+      margin-top: 0.3rem;
+    }
+
+    .tag {
+      font-size: 0.7rem;
+      border-radius: var(--radius-pill);
+      padding: 0.15rem 0.6rem;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-soft);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    canvas {
+      width: 100% !important;
+      max-height: 260px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.8rem;
+      margin-top: 0.5rem;
+    }
+
+    .stat {
+      padding: 0.6rem 0.7rem;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: rgba(15, 23, 42, 0.9);
+      font-size: 0.8rem;
+    }
+
+    .stat-label {
+      color: var(--text-soft);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.95rem;
+    }
+
+    .stat small {
+      display: block;
+      color: var(--text-soft);
+      margin-top: 0.2rem;
+    }
+
+    .explanation {
+      font-size: 0.82rem;
+      color: var(--text-soft);
+      line-height: 1.5;
+      margin-top: 0.7rem;
+    }
+
+    .explanation strong {
+      color: var(--text);
+    }
+
+    .pill.note {
+      background: rgba(127, 29, 29, 0.78);
+      border-color: rgba(248, 113, 113, 0.5);
+      color: #fee2e2;
+    }
+
+    .pill.note .pill-label {
+      color: #fecaca;
+    }
+
+    .pill.note .pill-value {
+      color: #fee2e2;
+    }
+
+    code {
+      background: rgba(15, 23, 42, 0.7);
+      padding: 0.15rem 0.35rem;
+      border-radius: 6px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      font-size: 0.78rem;
+      color: var(--accent);
+    }
+
+    /* 6-digit table + tooltip */
+    .combo-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 0.6rem;
+    }
+
+    .combo-table th,
+    .combo-table td {
+      padding: 0.4rem 0.45rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.8);
+    }
+
+    .combo-table th {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-soft);
+    }
+
+    .combo-rank {
+      width: 2.2rem;
+      color: var(--text-soft);
+    }
+
+    .combo-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-weight: 600;
+    }
+
+    .combo-pct {
+      position: relative;
+      cursor: help;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .combo-pct::after {
+      content: attr(data-reason);
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 135%;
+      width: min(260px, 90vw);
+      background: #020617;
+      color: #e5e7eb;
+      border-radius: 10px;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.95);
+      font-size: 0.75rem;
+      line-height: 1.4;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .combo-pct::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 125%;
+      border-width: 6px;
+      border-style: solid;
+      border-color: #020617 transparent transparent transparent;
+      opacity: 0;
+      z-index: 19;
+    }
+
+    .combo-pct:hover::after,
+    .combo-pct:hover::before {
+      opacity: 1;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      .combo-pct::after,
+      .combo-pct::before {
+        display: none; /* tooltips off on touch devices */
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 16px 10px 32px;
+      }
+
+      .card {
+        padding: 0.9rem 0.85rem 0.9rem;
+      }
+
+      canvas {
+        max-height: 220px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="title-block">
+        <div class="badge">Thai Lottery · Data Analytics Project</div>
+        <h1>10-Year Historical Pattern Exploration</h1>
+        <p class="subtitle">
+          This page visualises 10 years of Thai Government Lottery draws from your Excel file. 
+          It explores which number combinations <strong>appeared most often</strong> and how the outcomes 
+          are distributed. It is purely descriptive &amp; educational – it does <strong>not</strong> improve 
+          your odds of winning.
+        </p>
+      </div>
+      <div class="meta-grid">
+        <div class="pill">
+          <div class="pill-label">Data span (B.E.)</div>
+          <div class="pill-value"><strong>2558 – 2568</strong></div>
+        </div>
+        <div class="pill">
+          <div class="pill-label">Total draws analysed</div>
+          <div class="pill-value"><strong>240</strong> draws</div>
+        </div>
+        <div class="pill">
+          <div class="pill-label">2-digit coverage</div>
+          <div class="pill-value"><strong>90.0%</strong> of 00–99 appeared at least once</div>
+        </div>
+        <div class="pill">
+          <div class="pill-label">3-digit coverage</div>
+          <div class="pill-value">
+            <strong>21.3%</strong> of 000–999 (3-top) · 
+            <strong>60.1%</strong> (front/back)
+          </div>
+        </div>
+        <div class="pill note">
+          <div class="pill-label">Important</div>
+          <div class="pill-value">
+            These charts show how past draws behaved. Lottery draws are still random; 
+            <strong>past frequencies do not predict future winning numbers</strong>.
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- 2-digit -->
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="icon">2D</span>
+              Top 2-digit combinations (2 ตัวบน)
+            </div>
+          </div>
+          <p class="card-subtitle">
+            Showing the <strong>20 most frequent</strong> 2-digit results from the last two digits of the 1st prize (2 ตัวบน).
+          </p>
+          <div class="tag-row">
+            <span class="tag">Feature: 2 ตัวบน</span>
+            <span class="tag">Dimension: 2-digit (00–99)</span>
+            <span class="tag">Metric: frequency over 10 years</span>
+          </div>
+          <canvas id="twoDigitChart"></canvas>
+          <div class="stat-grid">
+            <div class="stat">
+              <div class="stat-label">Most frequent pair</div>
+              <div class="stat-value">03 <small>appeared 8 times</small></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Distinct pairs seen</div>
+              <div class="stat-value">90 / 100</div>
+              <small>Only 10 2-digit combinations never occurred in this sample.</small>
+            </div>
+          </div>
+          <p class="explanation">
+            You can discuss this chart in your report as: 
+            “From 240 draws, we observed 90 distinct 2-digit outcomes for the 2 ตัวบน prize, 
+            with <strong>03</strong> being the most frequent pair. However, the spread is still wide, 
+            which is consistent with a random process.”
+          </p>
+        </div>
+      </section>
+
+      <!-- Last digit -->
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="icon">1st</span>
+              Last digit of 1st prize distribution
+            </div>
+          </div>
+          <p class="card-subtitle">
+            Frequency of the <strong>last digit (0–9)</strong> of the 1st prize across all draws.
+          </p>
+          <div class="tag-row">
+            <span class="tag">Feature: รางวัลที่ 1 (last digit)</span>
+            <span class="tag">Metric: count per digit</span>
+            <span class="tag">Expectation: ~uniform</span>
+          </div>
+          <canvas id="lastDigitChart"></canvas>
+          <div class="explanation">
+            In a fair lottery, each final digit should appear with roughly equal probability 
+            (around 10% each). Here digit <strong>7</strong> is the most common in this sample, 
+            but small differences like this can easily happen due to random variation with only 
+            240 draws.
+          </div>
+        </div>
+      </section>
+
+      <!-- 3D top -->
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="icon">3D</span>
+              Top 3-digit combinations (3 ตัวบน)
+            </div>
+          </div>
+          <p class="card-subtitle">
+            The <strong>20 most frequent 3-digit outcomes</strong> for 3 ตัวบน (last three digits of the 1st prize).
+          </p>
+          <div class="tag-row">
+            <span class="tag">Feature: 3 ตัวบน</span>
+            <span class="tag">Dimension: 3-digit (000–999)</span>
+            <span class="tag">Metric: frequency over 10 years</span>
+          </div>
+          <canvas id="threeTopChart"></canvas>
+          <p class="explanation">
+            Only <strong>213</strong> out of 1000 possible 3-digit values appear at all in this 10-year window. 
+            This is expected because there are far more possible 3-digit combinations than draws, 
+            so most combinations are simply never observed.
+          </p>
+        </div>
+      </section>
+
+      <!-- 3D front/back -->
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="icon">FB</span>
+              Top 3-digit front &amp; back prizes
+            </div>
+          </div>
+          <p class="card-subtitle">
+            For each draw we collected all 3-digit “front” and “back” prizes from the 
+            <code>3 ตัวหน้า , 3 ตัวล่าง</code> column and counted how often each appears.
+          </p>
+          <div class="tag-row">
+            <span class="tag">Feature: 3 ตัวหน้า + 3 ตัวล่าง</span>
+            <span class="tag">Dimension: 3-digit (000–999)</span>
+            <span class="tag">Metric: overall frequency</span>
+          </div>
+          <canvas id="frontBackChart"></canvas>
+          <div class="stat-grid">
+            <div class="stat">
+              <div class="stat-label">Distinct 3D codes seen</div>
+              <div class="stat-value">601 / 1000</div>
+              <small>Front &amp; back prizes cover a larger portion of the sample space.</small>
+            </div>
+          </div>
+          <p class="explanation">
+            Because every draw contains several 3-digit front/back prizes, this feature explores
+            more of the possible 000–999 space than 3 ตัวบน alone. In your class you can compare 
+            how quickly coverage grows as we add more outcomes per draw.
+          </p>
+        </div>
+      </section>
+
+      <!-- NEW SECTION: 6-digit pattern-based combos -->
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="icon">6D</span>
+              Pattern-based 6-digit combinations
+            </div>
+          </div>
+          <p class="card-subtitle">
+            Using the 10-year data, we estimate the frequency of each digit (0–9) in each of the 6 positions
+            of the 1st prize. Assuming the digits are independent by position, we can compute a <strong>theoretical
+            probability</strong> for any 6-digit number.
+          </p>
+          <div class="tag-row">
+            <span class="tag">Feature: รางวัลที่ 1 (6 digits)</span>
+            <span class="tag">Metric: estimated probability</span>
+            <span class="tag">Method: digit frequencies by position</span>
+          </div>
+
+          <table class="combo-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>6-digit pattern</th>
+                <th>Estimated %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="combo-rank">1</td>
+                <td class="combo-code">911607</td>
+                <td>
+                  <span
+                    class="combo-pct"
+                    data-reason="Uses the most frequent digit in each of the 6 positions, based on 10 years of 1st prize data.">
+                    0.000522%
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td class="combo-rank">2</td>
+                <td class="combo-code">915607</td>
+                <td>
+                  <span
+                    class="combo-pct"
+                    data-reason="Same as the most-likely pattern, except position 3 uses the 2nd most frequent digit (5) instead of 1.">
+                    0.000504%
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td class="combo-rank">3</td>
+                <td class="combo-code">911603</td>
+                <td>
+                  <span
+                    class="combo-pct"
+                    data-reason="Same as the most-likely pattern, except position 6 uses the 2nd most frequent digit (3) instead of 7.">
+                    0.000489%
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td class="combo-rank">4</td>
+                <td class="combo-code">911667</td>
+                <td>
+                  <span
+                    class="combo-pct"
+                    data-reason="Same as the most-likely pattern, except position 5 uses the 2nd most frequent digit (6) instead of 0.">
+                    0.000474%
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td class="combo-rank">5</td>
+                <td class="combo-code">911307</td>
+                <td>
+                  <span
+                    class="combo-pct"
+                    data-reason="Same as the most-likely pattern, except position 4 uses the 2nd most frequent digit (3) instead of 6.">
+                    0.000471%
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="explanation">
+            These percentages are <strong>extremely small</strong> – even the “most likely” patterns are around
+            0.0005%. This is a good talking point in your presentation: <br />
+            <strong>Even when we use patterns from 10 years of data, the chance of any exact 6-digit number
+            is still practically zero.</strong> The table is useful to explain modelling and assumptions,
+            not to actually pick “lucky numbers”.
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // ================================
+    //  Data generated from Excel file
+    //  (already aggregated in Python)
+    // ================================
+
+    // Top 20 2-digit (2 ตัวบน)
+    const twoDigitLabels = [
+      "03","24","67","72","17",
+      "06","05","61","52","96",
+      "46","63","94","79","97",
+      "19","83","50","38","64"
+    ];
+    const twoDigitCounts = [
+      8,6,6,6,6,
+      5,5,5,4,4,
+      4,4,4,4,4,
+      4,4,4,4,4
+    ];
+
+    // Top 20 3-digit (3 ตัวบน)
+    const threeTopLabels = [
+      "324","867","388","227","863",
+      "116","603","395","446","453",
+      "272","903","417","519","196",
+      "106","258","787","628","391"
+    ];
+    const threeTopCounts = [
+      3,3,2,2,2,
+      2,2,2,2,2,
+      2,2,2,2,2,
+      2,2,2,2,2
+    ];
+
+    // Top 20 3-digit front/back (3 ตัวหน้า , 3 ตัวล่าง)
+    const frontBackLabels = [
+      "285","602","512","834","307",
+      "699","290","421","975","426",
+      "194","947","375","355","596",
+      "007","625","726","389","137"
+    ];
+    const frontBackCounts = [
+      5,4,4,4,4,
+      4,4,4,4,4,
+      4,4,4,4,4,
+      4,4,3,3
+    ];
+
+    // Last digit of 1st prize
+    const lastDigitLabels = ["0","1","2","3","4","5","6","7","8","9"];
+    const lastDigitCounts = [18,22,26,30,24,24,26,32,18,20];
+
+    // Helper: chart base options
+    function createBarChart(ctx, labels, data, options = {}) {
+      return new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: options.label || 'Frequency',
+            data,
+            borderWidth: 1.2,
+            borderRadius: 7,
+            backgroundColor: 'rgba(34, 197, 94, 0.25)',
+            borderColor: 'rgba(34, 197, 94, 0.9)'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+            padding: {
+              top: 8,
+              right: 12,
+              left: 4,
+              bottom: 4
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: '#9ca3af',
+                maxRotation: 0,
+                minRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: options.maxTicksX || 20
+              },
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              ticks: {
+                color: '#9ca3af',
+                precision: 0
+              },
+              grid: {
+                color: 'rgba(31, 41, 55, 0.7)'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: '#020617',
+              titleColor: '#e5e7eb',
+              bodyColor: '#e5e7eb',
+              borderColor: 'rgba(148, 163, 184, 0.6)',
+              borderWidth: 1,
+              cornerRadius: 10,
+              padding: 10,
+              callbacks: {
+                label: function(context) {
+                  const value = context.raw;
+                  return `Frequency: ${value} draw${value === 1 ? '' : 's'}`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const twoCtx = document.getElementById('twoDigitChart').getContext('2d');
+      createBarChart(twoCtx, twoDigitLabels, twoDigitCounts, {
+        label: '2-digit frequency (2 ตัวบน)',
+        maxTicksX: 20
+      });
+
+      const lastDigitCtx = document.getElementById('lastDigitChart').getContext('2d');
+      createBarChart(lastDigitCtx, lastDigitLabels, lastDigitCounts, {
+        label: 'Last digit of 1st prize',
+        maxTicksX: 10
+      });
+
+      const threeTopCtx = document.getElementById('threeTopChart').getContext('2d');
+      createBarChart(threeTopCtx, threeTopLabels, threeTopCounts, {
+        label: '3-digit frequency (3 ตัวบน)',
+        maxTicksX: 20
+      });
+
+      const frontBackCtx = document.getElementById('frontBackChart').getContext('2d');
+      createBarChart(frontBackCtx, frontBackLabels, frontBackCounts, {
+        label: '3-digit frequency (front & back prizes)',
+        maxTicksX: 20
+      });
+    });
+  </script>
+</body>
+</html>
